@@ -1,11 +1,7 @@
 # GKE-On-Prem
 
 ### Grab the configuration
-`git clone https://github.com/elastic/examples.git`
-or
-Click the *Clone or Download* button at the top right of https://github.com/elastic/examples
-
-All of the rest of the commands will be run from the directory `examples/GKE-On-Prem`
+`git clone https://git.keybank.com/scm/gcp00/gke-kubernetes-cluster-beats-monitoring.git`
 
 ### Set the cluster-admin-binding
 Logging and metrics tools like Filebeat, Fluentd, Metricbeat, Prometheus, etc. run as DameonSets.  To deploy DaemonSets you need the cluster role binding `cluster-admin-binding`.  Create it now:
@@ -14,11 +10,28 @@ Logging and metrics tools like Filebeat, Fluentd, Metricbeat, Prometheus, etc. r
 kubectl create clusterrolebinding cluster-admin-binding  \
   --clusterrole=cluster-admin --user=$(gcloud config get-value account)
 ```
+### Set the cluster-admin-binding
+In a terminal configured to access your GKE On-Prem environment, check to see if kube-state-metrics is already running:
+
+```
+kubectl get pods --namespace=kube-system | grep kube-state
+```
+If kube-state-metrics is already running, upgrade to a current version of GKE On-Prem that runs kube-state-metrics in a separate namespace before continuing.
+
+Install kube-state-metrics:
+```
+git clone \
+    https://github.com/kubernetes/kube-state-metrics.git
+kubectl create -f kube-state-metrics/kubernetes
+kubectl get pods --namespace=kube-system | grep kube-state
+```
 
 ### Deploy example application
 This uses the Guestbook app from the Kubernetes docs.  The YAML has been concatenated into a single manifest, and Apache HTTP mod Status has been enabled for metrics gathering.
 
 Before you deploy the manifest have a look at the frontend service.  You may need to edit this service so that the service is exposed to your internal network.  The network topology of the lab where this example was developed has a load balancer in front of the GKE On-Prem environment, and so the service specifies an IP Address associated with the load balancer.  Your configuration will likely be different.
+
+Note : Remove loadBalancerIP for GKE on GCP and keep it if its GKE On Prem
 
 ```
 ---
@@ -54,16 +67,15 @@ Check to see that the application is deployed and reachable on your network:
 
 Open a browser to the IP Address associated with the `frontend` service at port 80.
 ### Create secrets
-Rather than putting the Elasticsearch and Kibana endpoints into the manifest files they are provided to the Filebeat pods as k8s secrets.  Edit the files `elasticsearch-hosts-ports` and `kibana-host-port` and then create the secret:
+Rather than putting the Kafka endpoints into the manifest files they are provided to the Filebeat pods as k8s secrets.  Edit the files `kafka-hosts-ports` and then create the secret:
 
 ```
 kubectl create secret generic elastic-stack \
-  --from-file=./elasticsearch-hosts-ports \
-  --from-file=./kibana-host-port --namespace=kube-system
+  --from-file=./kafka-host-ports --namespace=kube-system
 ```
 
 ### Deploy index patterns, visualizations, dashboards, and machine learning jobs
-Filebeat and Metricbeat provide the configuration for things like web servers, caches, proxies, operating systems, container environments, databases, etc.  These are referred to as *Beats modules*.  By deploying these configurations you will be populating Elasticsearch and Kibana with visualizations, dashboards, machine learning jobs, etc.  
+Filebeat and Metricbeat provide the configuration for things like web servers, caches, proxies, operating systems, container environments, databases, etc.  These are referred to as *Beats modules*.  By deploying these configurations you will be populating Kafka on respective kafka topics.  
 
 ```
 kubectl create -f filebeat-setup.yaml
@@ -89,6 +101,4 @@ kubectl create -f metricbeat-kubernetes.yaml
 
 Verify that there is one filebeat, metricbeat, and journalbeat pod per k8s Node running.
 
-Check the logs for and one of the DaemonSet pods to ensure that they connected to Elasticsearch. 
-
-View your logs and metrics in Kibana.
+Check the logs for and one of the DaemonSet pods to ensure that they connected to kafka.
