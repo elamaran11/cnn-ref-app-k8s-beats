@@ -70,8 +70,8 @@ Open a browser to the IP Address associated with the `frontend` service at port 
 Rather than putting the Kafka endpoints into the manifest files they are provided to the Filebeat pods as k8s secrets.  Edit the files `kafka-hosts-ports` and then create the secret:
 
 ```
-kubectl create secret generic elastic-stack \
-  --from-file=./kafka-host-ports --namespace=kube-system
+kubectl create secret generic kafka-host \
+  --from-file=./kafka-hosts-ports --namespace=kube-system
 ```
 
 ### Deploy index patterns, visualizations, dashboards, and machine learning jobs

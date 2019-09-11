@@ -9,15 +9,16 @@ metadata:
     kubernetes.io/cluster-service: "true"
 data:
   filebeat.yml: |-
-    filebeat.config.modules:
-      path: ${path.config}/modules.d/*.yml
-      reload.enabled: false
-
-    setup.template.settings:
-      index.number_of_shards: 1
-      index.codec: best_compression
-
+    setup.template.enabled: false
+    setup.ilm.enabled: false
+    ilm.enabled: false
+    filebeat.inputs:
+      - type: log
+        enabled: true
+        paths:
+          - /var/log/*.log
     output.kafka:
+      enabled: true
       hosts: ${KAFKA_HOSTS}
       topic: 'gcp.file.raw'
       partition.round_robin:
@@ -38,34 +39,34 @@ spec:
     spec:
       restartPolicy: Never
       containers:
-      - name: filebeat-setup
-        image: docker.elastic.co/beats/filebeat:7.0.0
-        args: [
-          "-c", "/etc/filebeat.yml",
-          "-e",
-          "setup",
-        ]
-        env:
-        - name: KAFKA_HOSTS
-          valueFrom:
-            secretKeyRef:
-              name: kafka-host
-              key: kafka-hosts-ports
-        securityContext:
-          runAsUser: 0
-        volumeMounts:
-        - name: config
-          mountPath: /etc/filebeat.yml
-          readOnly: true
-          subPath: filebeat.yml
-        - name: dockersock
-          mountPath: /var/run/docker.sock
+        - name: filebeat-setup
+          image: docker.elastic.co/beats/filebeat:7.2.0
+          args: [
+            "-c", "/etc/filebeat.yml",
+            "-e",
+            #          "setup",
+          ]
+          env:
+            - name: KAFKA_HOSTS
+              valueFrom:
+                secretKeyRef:
+                  name: kafka-host
+                  key: kafka-hosts-ports
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: config
+              mountPath: /etc/filebeat.yml
+              readOnly: true
+              subPath: filebeat.yml
+            - name: dockersock
+              mountPath: /var/run/docker.sock
       volumes:
-      - name: dockersock
-        hostPath:
-          path: /var/run/docker.sock
-      - name: config
-        configMap:
-          defaultMode: 0600
-          name: filebeat-setup-config
+        - name: dockersock
+          hostPath:
+            path: /var/run/docker.sock
+        - name: config
+          configMap:
+            defaultMode: 0600
+            name: filebeat-setup-config
 ---

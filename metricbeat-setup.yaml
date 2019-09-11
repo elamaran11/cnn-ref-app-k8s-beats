@@ -39,34 +39,34 @@ spec:
     spec:
       restartPolicy: Never
       containers:
-      - name: metricbeat-setup
-        image: docker.elastic.co/beats/metricbeat:7.0.0
-        args: [
-          "-c", "/etc/metricbeat.yml",
-          "-e",
-          "setup",
-        ]
-        env:
-        - name: KAFKA_HOSTS
-          valueFrom:
-            secretKeyRef:
-              name: kafka-host
-              key: kafka-hosts-ports
-        securityContext:
-          runAsUser: 0
-        volumeMounts:
-        - name: config
-          mountPath: /etc/metricbeat.yml
-          readOnly: true
-          subPath: metricbeat.yml
-        - name: dockersock
-          mountPath: /var/run/docker.sock
+        - name: metricbeat-setup
+          image: docker.elastic.co/beats/metricbeat:7.0.0
+          args: [
+            "-c", "/etc/metricbeat.yml",
+            "-e",
+            #          "setup",
+          ]
+          env:
+            - name: KAFKA_HOSTS
+              valueFrom:
+                secretKeyRef:
+                  name: kafka-host
+                  key: kafka-hosts-ports
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: config
+              mountPath: /etc/metricbeat.yml
+              readOnly: true
+              subPath: metricbeat.yml
+            - name: dockersock
+              mountPath: /var/run/docker.sock
       volumes:
-      - name: dockersock
-        hostPath:
-          path: /var/run/docker.sock
-      - name: config
-        configMap:
-          defaultMode: 0600
-          name: metricbeat-setup-config
+        - name: dockersock
+          hostPath:
+            path: /var/run/docker.sock
+        - name: config
+          configMap:
+            defaultMode: 0600
+            name: metricbeat-setup-config
 ---
