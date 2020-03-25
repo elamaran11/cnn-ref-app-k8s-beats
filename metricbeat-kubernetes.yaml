@@ -21,30 +21,30 @@ data:
     #      host: ${NODE_NAME}
     #      hints.enabled: true
 
-    metricbeat.autodiscover:
-      providers:
-        - type: kubernetes
-          host: ${HOSTNAME}
-          templates:
-            - condition.equals:
-                kubernetes.labels.tier: backend
-              config:
-                - module: redis
-                  metricsets: ["info", "keyspace"]
-                  period: 10s
+    # metricbeat.autodiscover:
+    #   providers:
+    #     - type: kubernetes
+    #       host: ${HOSTNAME}
+    #       templates:
+    #         - condition.equals:
+    #             kubernetes.labels.tier: backend
+    #           config:
+    #             - module: redis
+    #               metricsets: ["info", "keyspace"]
+    #               period: 10s
 
-                  # Redis hosts
-                  hosts: ["${data.host}:6379"]
+    #               # Redis hosts
+    #               hosts: ["${data.host}:6379"]
 
-            - condition.equals:
-                kubernetes.labels.tier: frontend
-              config:
-                - module: apache
-                  metricsets: ["status"]
-                  period: 10s
+    #         - condition.equals:
+    #             kubernetes.labels.tier: frontend
+    #           config:
+    #             - module: apache
+    #               metricsets: ["status"]
+    #               period: 10s
 
-                  # Apache hosts
-                  hosts: ["http://${data.host}:80"]
+    #               # Apache hosts
+    #               hosts: ["http://${data.host}:80"]
 
 
     processors:
